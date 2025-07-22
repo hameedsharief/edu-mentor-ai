@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EduMentor AI</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f0f4f8; padding: 20px; }
+        .container { max-width: 700px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        select, textarea, button, input { width: 100%; margin: 10px 0; padding: 10px; font-size: 16px; }
+        #response { background: #eef; padding: 15px; border-radius: 5px; white-space: pre-wrap; }
+        video, canvas, img { width: 100%; margin-top: 10px; border-radius: 6px; }
+        #stopBtn { width: 100%; background-color: #f44336; color: white; border: none; padding: 10px; margin-top: 5px; cursor: pointer; display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🎓 EduMentor AI – Your Personal Tutor</h2>
+
+        <label>Select Class:</label>
+        <select id="class">
+            <option value="1">Class 1</option>
+            <option value="2">Class 2</option>
+            <option value="3">Class 3</option>
+            <option value="4">Class 4</option>
+            <option value="5">Class 5</option>
+            <option value="6">Class 6</option>
+            <option value="7">Class 7</option>
+            <option value="8">Class 8</option>
+            <option value="9">Class 9</option>
+            <option value="10">Class 10</option>
+            <option value="11">Class 11</option>
+            <option value="12">Class 12</option>
+            <option value="UG">Undergraduate</option>
+            <option value="PG">Postgraduate</option>
+        </select>
+
+        <label>Select Board:</label>
+        <select id="board">
+            <option value="CBSE">CBSE</option>
+            <option value="ICSE">ICSE</option>
+            <option value="SSC">State Board (SSC)</option>
+            <option value="IB">IB</option>
+            <option value="IGCSE">IGCSE</option>
+        </select>
+
+        <label>Select Language Style:</label>
+        <select id="language">
+            <option value="english">English</option>
+            <option value="hindi">Hindi</option>
+            <option value="telugu">Andhra Style (Telugu-English)</option>
+            <option value="desi">Desi Mix (Hindi-English)</option>
+            <option value="urdu">English-Andhra Urdu</option>
+        </select>
+
+        <label>Ask your doubt:</label>
+        <textarea id="question" rows="3" placeholder="Type or speak your doubt..."></textarea>
+        <button onclick="startListening()">🎙️ Speak</button>
+        <button onclick="sendQuestion()">📤 Ask</button>
+
+        <label>Upload or Capture an Image of the Question:</label>
+        <input type="file" id="imageInput" accept="image/*">
+        <button onclick="uploadImage()">🖼️ Upload Image</button>
+        <button onclick="startCamera()">📸 Start Camera</button>
+
+        <video id="video" autoplay style="display:none;"></video>
+        <canvas id="canvas" style="display:none;"></canvas>
+        <button onclick="captureImage()">📷 Capture & Submit</button>
+        <img id="previewImage" style="display:none;" />
+        <button id="stopBtn" onclick="stopCamera()">❌ Stop Camera</button>
+
+        <div id="responseSection" style="display:none;">
+            <h3>📘 Response:</h3>
+            <div id="response"></div>
+            <button onclick="readAnswer(document.getElementById('response').innerText)">🔊 Read it aloud</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
