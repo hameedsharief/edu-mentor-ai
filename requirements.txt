@@ -1,6 +1,7 @@
-fastapi
-uvicorn
+flask
 openai
-python-multipart
+python-dotenv
 pillow
+pytesseract
+torch
 whisper

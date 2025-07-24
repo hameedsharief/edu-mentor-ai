@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduMentor AI - Your Personal Tutor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            text-align: center;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            flex: 1;
+            display: flex;
+            gap: 2rem;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            height: fit-content;
+        }
+
+        .main-content {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .input-methods {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .method-btn {
+            flex: 1;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .method-btn.active {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        }
+
+        .query-input {
+            margin-bottom: 2rem;
+        }
+
+        .query-input textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        .query-input textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .file-upload {
+            border: 2px dashed #e1e5e9;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+
+        .file-upload:hover {
+            border-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+
+        .file-upload.dragover {
+            border-color: #48bb78;
+            background-color: rgba(72, 187, 120, 0.05);
+        }
+
+        .file-upload input {
+            display: none;
+        }
+
+        .file-upload-text {
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+        .voice-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .voice-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .voice-btn.record {
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+            color: white;
+        }
+
+        .voice-btn.record.recording {
+            animation: pulse 1s infinite;
+        }
+
+        .voice-btn.stop {
+            background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+            color: white;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .response-area {
+            flex: 1;
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+
+        .response-message {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .response-message.user {
+            background: #e6fffa;
+            border-left-color: #38b2ac;
+        }
+
+        .response-message.extracted-text {
+            background: #fff5f5;
+            border-left-color: #f56565;
+        }
+
+        .response-message.transcribed-text {
+            background: #f0fff4;
+            border-left-color: #48bb78;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 1rem;
+            color: #666;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #e53e3e;
+        }
+
+        .student-info {
+            background: #e6fffa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #38b2ac;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                padding: 1rem;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .input-methods {
+                flex-direction: column;
+            }
+
+            .method-btn {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fas fa-graduation-cap"></i> EduMentor AI</h1>
+        <p>Your Personal Multimodal Tutor - Supporting Students from Class 1 to Postgraduate</p>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <h3><i class="fas fa-user-graduate"></i> Student Information</h3>
+            
+            <div class="form-group">
+                <label for="studentName">Name (Optional)</label>
+                <input type="text" id="studentName" placeholder="Enter your name">
+            </div>
+
+            <div class="form-group">
+                <label for="studentClass">Class/Level</label>
+                <select id="studentClass">
+                    <option value="">Select your class</option>
+                    <option value="Class 1">Class 1</option>
+                    <option value="Class 2">Class 2</option>
+                    <option value="Class 3">Class 3</option>
+                    <option value="Class 4">Class 4</option>
+                    <option value="Class 5">Class 5</option>
+                    <option value="Class 6">Class 6</option>
+                    <option value="Class 7">Class 7</option>
+                    <option value="Class 8">Class 8</option>
+                    <option value="Class 9">Class 9</option>
+                    <option value="Class 10">Class 10</option>
+                    <option value="Class 11">Class 11</option>
+                    <option value="Class 12">Class 12</option>
+                    <option value="Undergraduate">Undergraduate</option>
+                    <option value="Postgraduate">Postgraduate</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="studentBoard">Academic Board</label>
+                <select id="studentBoard">
+                    <option value="">Select your board</option>
+                    <option value="CBSE">CBSE</option>
+                    <option value="ICSE">ICSE</option>
+                    <option value="SSC">SSC (State Board)</option>
+                    <option value="IB">IB (International Baccalaureate)</option>
+                    <option value="IGCSE">IGCSE</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="languagePreference">Language Preference</label>
+                <select id="languagePreference">
+                    <option value="English">Pure English</option>
+                    <option value="Hindi">Hindi</option>
+                    <option value="English-Hindi">Mixed English-Hindi (Desi Style)</option>
+                    <option value="English-Telugu">Mixed English-Telugu (Andhra Style)</option>
+                    <option value="English-Urdu">Mixed English-Urdu (Andhra Urdu Style)</option>
+                </select>
+            </div>
+
+            <button class="btn" onclick="registerStudent()">
+                <i class="fas fa-save"></i> Save Information
+            </button>
+
+            <div id="studentInfoDisplay" class="student-info hidden">
+                <h4>Registered Student</h4>
+                <div id="studentInfoContent"></div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <h3><i class="fas fa-comments"></i> Ask Your Question</h3>
+            
+            <div class="input-methods">
+                <button class="btn method-btn active" data-method="text" onclick="switchInputMethod('text')">
+                    <i class="fas fa-keyboard"></i> Text
+                </button>
+                <button class="btn method-btn" data-method="image" onclick="switchInputMethod('image')">
+                    <i class="fas fa-image"></i> Image
+                </button>
+                <button class="btn method-btn" data-method="voice" onclick="switchInputMethod('voice')">
+                    <i class="fas fa-microphone"></i> Voice
+                </button>
+            </div>
+
+            <!-- Text Input -->
+            <div id="textInput" class="query-input">
+                <textarea id="textQuery" placeholder="Type your question here... For example: 'Explain photosynthesis for Class 7 CBSE' or 'Why do stars twinkle?'"></textarea>
+                <button class="btn" onclick="submitTextQuery()">
+                    <i class="fas fa-paper-plane"></i> Ask Question
+                </button>
+            </div>
+
+            <!-- Image Input -->
+            <div id="imageInput" class="query-input hidden">
+                <div class="file-upload" onclick="document.getElementById('imageFile').click()">
+                    <i class="fas fa-upload" style="font-size: 2rem; color: #667eea;"></i>
+                    <div class="file-upload-text">
+                        Click to upload an image or drag and drop<br>
+                        <small>Supports: JPG, PNG, PDF pages, handwritten notes</small>
+                    </div>
+                    <input type="file" id="imageFile" accept="image/*" onchange="handleImageUpload(this)">
+                </div>
+                <div id="imagePreview" class="hidden" style="margin-top: 1rem; text-align: center;">
+                    <img id="previewImg" style="max-width: 100%; max-height: 300px; border-radius: 8px;">
+                    <br>
+                    <button class="btn" onclick="submitImageQuery()" style="margin-top: 1rem;">
+                        <i class="fas fa-search"></i> Analyze Image
+                    </button>
+                </div>
+            </div>
+
+            <!-- Voice Input -->
+            <div id="voiceInput" class="query-input hidden">
+                <div class="voice-controls">
+                    <button class="voice-btn record" id="recordBtn" onclick="startRecording()">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                    <button class="voice-btn stop" id="stopBtn" onclick="stopRecording()" disabled>
+                        <i class="fas fa-stop"></i>
+                    </button>
+                </div>
+                <p style="text-align: center; color: #666; margin-bottom: 1rem;">
+                    Click the microphone to start recording your question
+                </p>
+                <div id="voiceStatus" style="text-align: center; color: #667eea; font-weight: 600;"></div>
+            </div>
+
+            <div class="loading" id="loading">
+                <i class="fas fa-spinner fa-spin"></i> Processing your question...
+            </div>
+
+            <div class="response-area" id="responseArea">
+                <div style="text-align: center; color: #666; padding: 2rem;">
+                    <i class="fas fa-robot" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                    <p>Welcome to EduMentor AI! Register your information above and ask your first question.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
