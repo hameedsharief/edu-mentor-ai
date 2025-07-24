@@ -283,16 +283,52 @@ async function startRecording() {
     }
 
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
+        // Check if browser supports getUserMedia
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error('Your browser does not support voice recording. Please try Chrome, Firefox, or Edge.');
+        }
+
+        // Request microphone access with detailed constraints
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                sampleRate: 44100
+            } 
+        });
+
+        // Try to use WAV format first, fallback to supported formats
+        let mimeType = 'audio/wav';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+            if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                mimeType = 'audio/webm;codecs=opus';
+            } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+                mimeType = 'audio/webm';
+            } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                mimeType = 'audio/mp4';
+            } else {
+                mimeType = ''; // Let browser choose
+            }
+        }
+
+        mediaRecorder = new MediaRecorder(stream, {
+            mimeType: mimeType
+        });
+        
+        console.log('Using MIME type:', mediaRecorder.mimeType);
+        
         audioChunks = [];
 
         mediaRecorder.ondataavailable = function(event) {
-            audioChunks.push(event.data);
+            if (event.data.size > 0) {
+                audioChunks.push(event.data);
+            }
         };
 
         mediaRecorder.onstop = function() {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            const audioBlob = new Blob(audioChunks, { 
+                type: mediaRecorder.mimeType || 'audio/wav' 
+            });
             const reader = new FileReader();
             reader.onload = function() {
                 submitVoiceQuery(reader.result);
@@ -307,11 +343,42 @@ async function startRecording() {
         document.getElementById('recordBtn').disabled = true;
         document.getElementById('recordBtn').classList.add('recording');
         document.getElementById('stopBtn').disabled = false;
-        document.getElementById('voiceStatus').textContent = 'Recording... Click stop when finished';
+        document.getElementById('voiceStatus').innerHTML = '🔴 Recording... Click stop when finished';
+
+        console.log('Recording started successfully');
 
     } catch (error) {
-        showError('Unable to access microphone. Please check permissions.');
         console.error('Recording error:', error);
+        
+        let errorMessage = 'Unable to access microphone. ';
+        
+        if (error.name === 'NotAllowedError') {
+            errorMessage += 'Please allow microphone access in your browser settings and refresh the page.';
+        } else if (error.name === 'NotFoundError') {
+            errorMessage += 'No microphone found. Please connect a microphone and try again.';
+        } else if (error.name === 'NotSupportedError') {
+            errorMessage += 'Your browser does not support voice recording. Please try Chrome, Firefox, or Edge.';
+        } else if (error.name === 'SecurityError') {
+            errorMessage += 'Microphone access blocked due to security restrictions. Please use HTTPS or localhost.';
+        } else {
+            errorMessage += error.message || 'Please check your microphone settings.';
+        }
+        
+        showError(errorMessage);
+        
+        // Show detailed troubleshooting
+        addMessage(`
+🎤 **Microphone Troubleshooting:**
+
+1. **Allow Permissions:** Click the 🔒 or 🛡️ icon in your address bar and allow microphone access
+2. **Use Supported Browser:** Chrome, Firefox, Edge, or Safari
+3. **Check URL:** Make sure you're using http://localhost:5000
+4. **Test Microphone:** Ensure your microphone works in other applications
+5. **Refresh Page:** After changing permissions, refresh the page
+
+**Current URL:** ${window.location.href}
+**Browser:** ${navigator.userAgent.includes('Chrome') ? 'Chrome' : navigator.userAgent.includes('Firefox') ? 'Firefox' : navigator.userAgent.includes('Safari') ? 'Safari' : 'Other'}
+        `, 'ai');
     }
 }
 

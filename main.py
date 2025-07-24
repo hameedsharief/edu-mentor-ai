@@ -183,32 +183,118 @@ transliteration using English script only.
     def process_voice_query(self, audio_data, student_info):
         """Process voice-based queries using speech recognition"""
         try:
-            # Save audio data to temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_audio:
-                audio_bytes = base64.b64decode(audio_data.split(',')[1])
-                temp_audio.write(audio_bytes)
-                temp_audio_path = temp_audio.name
+            # Decode base64 audio data
+            audio_bytes = base64.b64decode(audio_data.split(',')[1])
             
-            # Initialize speech recognizer
-            r = sr.Recognizer()
+            # Create temporary file with proper extension
+            temp_audio_path = None
             
-            # Convert speech to text
-            with sr.AudioFile(temp_audio_path) as source:
-                audio = r.record(source)
-                text = r.recognize_google(audio)
-            
-            # Clean up temporary file
-            os.unlink(temp_audio_path)
+            try:
+                # Try to convert audio to WAV format using PIL/Pillow audio processing
+                # First, save the original audio
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.webm') as temp_original:
+                    temp_original.write(audio_bytes)
+                    temp_original_path = temp_original.name
+                
+                # Convert to WAV using system command (fallback method)
+                temp_wav_path = temp_original_path.replace('.webm', '.wav')
+                
+                try:
+                    # Try using pydub for audio conversion
+                    from pydub import AudioSegment
+                    from pydub.utils import which
+                    
+                    # Load the audio file
+                    if audio_data.startswith('data:audio/webm'):
+                        audio = AudioSegment.from_file(temp_original_path, format="webm")
+                    elif audio_data.startswith('data:audio/mp4'):
+                        audio = AudioSegment.from_file(temp_original_path, format="mp4")
+                    else:
+                        # Try as wav first
+                        audio = AudioSegment.from_file(temp_original_path, format="wav")
+                    
+                    # Export as WAV
+                    audio.export(temp_wav_path, format="wav")
+                    temp_audio_path = temp_wav_path
+                    
+                except ImportError:
+                    # Pydub not available, try direct approach
+                    print("Warning: pydub not installed. Trying direct audio processing...")
+                    
+                    # Rename the file to .wav and hope it works
+                    import shutil
+                    shutil.copy(temp_original_path, temp_wav_path)
+                    temp_audio_path = temp_wav_path
+                
+                except Exception as conversion_error:
+                    print(f"Audio conversion error: {conversion_error}")
+                    # Try using the original file directly
+                    temp_audio_path = temp_original_path
+                
+                # Initialize speech recognizer
+                r = sr.Recognizer()
+                
+                # Adjust for ambient noise and recognition settings
+                with sr.AudioFile(temp_audio_path) as source:
+                    # Adjust for ambient noise
+                    r.adjust_for_ambient_noise(source, duration=0.5)
+                    # Record the audio
+                    audio = r.record(source)
+                
+                # Try multiple recognition services for better accuracy
+                recognized_text = None
+                
+                try:
+                    # Try Google Speech Recognition (free)
+                    recognized_text = r.recognize_google(audio, language='en-IN')  # Indian English
+                except sr.UnknownValueError:
+                    try:
+                        # Fallback to US English
+                        recognized_text = r.recognize_google(audio, language='en-US')
+                    except sr.UnknownValueError:
+                        try:
+                            # Try with different audio settings
+                            recognized_text = r.recognize_google(audio)
+                        except sr.UnknownValueError:
+                            return {
+                                'success': False,
+                                'error': 'Could not understand the audio. Please speak clearly and try again.'
+                            }
+                except sr.RequestError as e:
+                    return {
+                        'success': False,
+                        'error': f'Speech recognition service error: {str(e)}. Please try again later.'
+                    }
+                
+                if not recognized_text:
+                    return {
+                        'success': False,
+                        'error': 'No speech detected. Please speak louder and try again.'
+                    }
+                
+            finally:
+                # Clean up temporary files
+                try:
+                    if temp_audio_path and os.path.exists(temp_audio_path):
+                        os.unlink(temp_audio_path)
+                    if 'temp_original_path' in locals() and os.path.exists(temp_original_path):
+                        os.unlink(temp_original_path)
+                    if 'temp_wav_path' in locals() and temp_wav_path != temp_audio_path and os.path.exists(temp_wav_path):
+                        os.unlink(temp_wav_path)
+                except Exception as cleanup_error:
+                    print(f"Cleanup error: {cleanup_error}")
             
             # Process the transcribed text
-            response = self.process_text_query(text, student_info)
-            response['transcribed_text'] = text
+            response = self.process_text_query(recognized_text, student_info)
+            response['transcribed_text'] = recognized_text
             
             return response
+            
         except Exception as e:
+            print(f"Voice processing error: {str(e)}")
             return {
                 'success': False,
-                'error': f'Voice processing failed: {str(e)}'
+                'error': f'Voice processing failed: {str(e)}. Please try again or use text input.'
             }
 
     def generate_demo_response(self, query, student_info):
@@ -387,5 +473,15 @@ if __name__ == '__main__':
     print("   └── static/")
     print("       └── script.js")
     print("========================================")
+
+    print("🎤 MICROPHONE ACCESS NOTES:")
+    print("- Access via: http://localhost:5000 (recommended)")
+    print("- If using IP address, you may need HTTPS for microphone")
+    print("- Grant microphone permissions when browser asks")
+    print("========================================")
+
+    # For production with HTTPS, uncomment these lines:
+    # app.run(debug=True, host='0.0.0.0', port=5000, ssl_context='adhoc')
+    # For development (current setup)
     
     app.run(debug=True, host='0.0.0.0', port=5000)
