@@ -91,7 +91,7 @@ sudo apt install tesseract-ocr
 ### Step 2: Clone and Setup Project
 
 ```bash
-git clone https://github.com/yourusername/edumentor-ai.git
+git clone https://github.com/hameedsharief/edumentor-ai.git
 cd edumentor-ai
 
 mkdir templates static
