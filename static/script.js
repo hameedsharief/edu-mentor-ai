@@ -488,7 +488,8 @@ function addMessage(content, type) {
             break;
     }
     
-    messageDiv.innerHTML = `${icon}${content}`;
+    //messageDiv.innerHTML = `${icon}${content}`;
+    messageDiv.innerHTML = `${icon}${formatText(content)}`;
     responseArea.appendChild(messageDiv);
     
     // Scroll to bottom
@@ -527,10 +528,11 @@ function showSuccess(message) {
     responseArea.scrollTop = responseArea.scrollHeight;
 }
 
-// Utility function to format text with basic markdown-like formatting
 function formatText(text) {
     return text
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/\n/g, '<br>');
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')   // bold
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')               // italic
+        .replace(/\n/g, '<ul><li>')                         // line breaks
+        .replace(/•/g, '🔹')                                // bullet emoji for bullets
+        .replace(/^- /gm, '🔹 ');                           // or dashes used as bullets
 }

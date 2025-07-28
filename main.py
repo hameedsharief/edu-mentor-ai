@@ -1,3 +1,19 @@
+def process_voice_query_simple(self, audio_data, student_info):
+        """Simplified voice processing - fallback method"""
+        try:
+            # For now, return a helpful message about voice input
+            return {
+                'success': True,
+                'response': f"I heard your voice message! However, voice-to-text processing needs some additional setup. For now, please type your question in the text box and I'll be happy to help! 🎤➡️📝",
+                'transcribed_text': "[Voice input received - please type your question]",
+                'timestamp': datetime.now().isoformat(),
+                'note': 'Voice processing temporarily disabled - needs FFmpeg installation'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'Voice processing error: {str(e)}'
+            }
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import openai
@@ -32,7 +48,6 @@ else:
 
 # Student session storage (in production, use a proper database)
 student_sessions = {}
-
 class EduMentorAI:
     def __init__(self):
         self.system_prompt = """
@@ -80,6 +95,33 @@ class EduMentorAI:
         3. End with a motivating, curiosity-building tone
 
         Respond in a clear, concise, and age-appropriate manner — like a caring human teacher or guide.
+
+        When generating responses:
+        - Use short, clear **paragraphs** or **bullet points** for better readability
+        - **Bold** important terms or concepts using Markdown (**like this**)
+        - Use friendly emojis (🌟, 💡, ➕) sparingly to highlight key ideas
+        - Avoid overly long paragraphs
+        - Structure your answer with headings or subpoints if needed
+
+        📝 Formatting Instructions:
+        - Always use clear formatting in Markdown.
+        - Use **bold** for important terms, keywords, and definitions.
+        - Use 🔹 bullet points or numbered lists where applicable.
+        - Put **each bullet point on a new line** using proper Markdown syntax (`\n-` or `\n1.`).
+        - Use short paragraphs (1–3 sentences max).
+        - Do not return everything in one long paragraph.
+        - Use emojis (sparingly) to make learning fun — but don’t overuse them.
+
+        Example Format:
+        **Photosynthesis** is the process by which plants make their own food. 🌱
+
+        **Steps:**
+        1. **Sunlight** is absorbed by **chlorophyll**.
+        2. **Carbon dioxide** is taken from the air.
+        3. **Water** is absorbed by roots.
+        4. Plants make **glucose** (food) and release **oxygen**.
+
+        Respond in this format for all answers — especially science and concept explanations.
         """
 
     def process_text_query(self, query, student_info):
@@ -435,7 +477,17 @@ def handle_voice_query():
             }), 400
         
         student_info = student_sessions[session_id]
-        response = edu_mentor.process_voice_query(audio_data, student_info)
+          # Try full voice processing first, fallback to simple if it fails
+
+        try:
+
+            response = edu_mentor.process_voice_query(audio_data, student_info)
+
+        except Exception as voice_error:
+
+            print(f"Full voice processing failed: {voice_error}")
+
+            response = edu_mentor.process_voice_query_simple(audio_data, student_info)
         
         return jsonify(response)
     except Exception as e:
@@ -473,15 +525,32 @@ if __name__ == '__main__':
     print("   └── static/")
     print("       └── script.js")
     print("========================================")
-
-    print("🎤 MICROPHONE ACCESS NOTES:")
-    print("- Access via: http://localhost:5000 (recommended)")
-    print("- If using IP address, you may need HTTPS for microphone")
-    print("- Grant microphone permissions when browser asks")
+    print("🌐 ACCESS OPTIONS:")
+    print("- Local access: http://localhost:5000")
+    print("- Network access: http://YOUR_IP:5000")
+    print("🎤 MICROPHONE NOTES:")
+    print("- Localhost: Full microphone access")
+    print("- IP address: May need HTTPS for microphone")
+    print("- Grant permissions when browser asks")
     print("========================================")
 
+    # Get local IP address for convenience
+    try:
+        import socket
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        print(f"📡 Your local IP: {local_ip}")
+        print(f"🔗 Network URL: http://{local_ip}:5000")
+    except:
+        print("📡 Could not determine local IP")
     # For production with HTTPS, uncomment these lines:
     # app.run(debug=True, host='0.0.0.0', port=5000, ssl_context='adhoc')
     # For development (current setup)
-    
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Run Flask development server (works with IP access)
+
+    app.run(
+        debug=True, 
+        host='0.0.0.0',  # Allow external connections
+        port=5000,
+        threaded=True    # Handle multiple requests
+    )
